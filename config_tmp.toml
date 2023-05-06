@@ -1,0 +1,10 @@
+appname = "transbot"
+version = "0.1.0"
+
+[notion]
+	api_auth = "[your_notion_secret_key]"
+	base_url = "https://api.notion.com"
+	version = "2022-06-28"
+
+[service]
+	port = 8080
