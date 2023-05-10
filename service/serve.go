@@ -17,7 +17,6 @@ func StartServe() {
 
 	log.Info("Starting server...")
 	openai_key := viper.GetString("openai.api_key")
-	fmt.Println("-----", openai_key)
 	notion_auth := viper.GetString("notion.api_auth")
 	transbot = translator.CreateTranslator(openai_key, notion_auth)
 
