@@ -2,9 +2,14 @@ appname = "transbot"
 version = "0.1.0"
 
 [notion]
-	api_auth = "[your_notion_secret_key]"
+	api_auth = "<your notion api auth key>"
 	base_url = "https://api.notion.com"
 	version = "2022-06-28"
+
+[openai]
+	api_key = "<your openai api key>"
+	temperature = 0.7
+	model = "gpt-4"
 
 [service]
 	port = 8080
