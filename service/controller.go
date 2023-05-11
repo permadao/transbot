@@ -4,12 +4,101 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cryptowizard0/go-notion"
 	"github.com/gin-gonic/gin"
 	"github.com/permadao/transbot/notionopt"
 	log "github.com/sirupsen/logrus"
 )
 
 func TranslatePage(c *gin.Context) {
+	uuid := c.Param("pageuuid")
+	language := c.Param("language")
+	log.Debugf("Get request <translate page> pageuuid: %s , target language: %s", uuid, language)
+
+	go translate_segmentation(uuid, language)
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"message": "OK",
+	})
+}
+
+// Divide the text into segments and write each segment
+// into Notion after completing its translation,
+// and write the translated segments separately.
+func translate_segmentation(uuid, language string) {
+	// get notion page
+	pageContent, err := transbot.NotionClient.FetchPage(uuid)
+	if err != nil {
+		log.WithField("page_id", uuid).Error("fetch page failed: ", err.Error())
+		return
+	}
+
+	// convert string content to struct blocks
+	page, err := notionopt.Content2NotionPage(pageContent)
+	if err != nil {
+		log.Error("convert block error: ", err.Error())
+		return
+	}
+	// traslate title
+	pageProp, ok := page.PageInfo.Properties.(notion.PageProperties)
+	if !ok {
+		log.Error("get page properties error: ", err.Error())
+		return
+	}
+	title := notionopt.GetFullRichtext(pageProp.Title.Title)
+	tranedTitle, err := transbot.Translate(title, language)
+	if err != nil {
+		log.Error("translate title error: ", err.Error())
+		return
+	}
+	notionopt.ReplaceRichtext(&pageProp.Title.Title, tranedTitle)
+
+	// create new page
+	newPageuuid, err := transbot.NotionClient.CreateNewPage(page.PageInfo.ID, page)
+	if err != nil {
+		log.Error("create new page error: ", err.Error())
+		return
+	}
+
+	// translate content
+	for _, block := range page.PageContent.Results {
+		toTrans, err := notionopt.GetBlockContent(block)
+		if err != nil {
+			log.Error("get block content error: ", err.Error())
+			return
+		}
+		if toTrans != "" {
+			traned, err := transbot.Translate(toTrans, language)
+			if err != nil {
+				log.Error("translate block content error: ", err.Error())
+				return
+			}
+
+			err = notionopt.ReplaceBlockContent(block, traned)
+			if err != nil {
+				log.Error("replace block content error: ", err.Error())
+				return
+			}
+
+			err = transbot.NotionClient.AppendBlockChildren(newPageuuid, block)
+			if err != nil {
+				log.Error("append child block error: ", err.Error())
+				return
+			}
+		} else { // contentless block, like image
+			err = transbot.NotionClient.AppendBlockChildren(newPageuuid, block)
+			if err != nil {
+				log.Error("append child block error: ", err.Error())
+				return
+			}
+		}
+	}
+}
+
+// Concurrent translation, aggregate the results after translation,
+// and generate the complete page in one go.
+func translate_concurrent(c *gin.Context) {
 	uuid := c.Param("pageuuid")
 	language := c.Param("language")
 	log.Debugf("Get request <translate page> pageuuid: %s , target language: %s", uuid, language)

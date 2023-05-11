@@ -34,8 +34,6 @@ func MergeChildBlocks(content1, content2 string) (merged string, err error) {
 		gjson.Get(content1, "type").String(),
 		gjson.Get(content1, "obblockject").String())
 
-	log.Debug("merged: ", merged)
-
 	return merged, nil
 }
 
@@ -135,6 +133,11 @@ func ReplaceBlockContent(block notion.Block, newContent string) error {
 	if err != nil {
 		return err
 	}
+
+	return ReplaceRichtext(richtext, newContent)
+}
+
+func ReplaceRichtext(richtext *[]notion.RichText, newContent string) error {
 	if len(*richtext) == 0 {
 		return ErrRichtextIsNull
 	}
@@ -164,7 +167,7 @@ func GetRichtext(block notion.Block) (*[]notion.RichText, error) {
 	case notion.BlockTypeNumberedListItem:
 		return &dto.NumberedListItem.RichText, nil
 	case notion.BlockTypeBulletedListItem:
-		return &dto.NumberedListItem.RichText, nil
+		return &dto.BulletedListItem.RichText, nil
 	case notion.BlockTypeToDo:
 		return &dto.ToDo.RichText, nil
 	case notion.BlockTypeToggle:

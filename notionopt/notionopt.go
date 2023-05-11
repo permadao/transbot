@@ -110,6 +110,35 @@ func (n *NotionOperator) Content2NotionPage(srcContent string) (*NotionPage, err
 	return Content2NotionPage(srcContent)
 }
 
+func (n *NotionOperator) CreateNewPage(parentId string, page *NotionPage) (uuid string, err error) {
+	log.WithField("parent", parentId).Info("notion operator: create page")
+
+	pageProp, ok := page.PageInfo.Properties.(notion.PageProperties)
+	if !ok {
+		return "", fmt.Errorf("convert page preperites error")
+	}
+	newPageParams := notion.CreatePageParams{
+		ParentType: notion.ParentTypePage,
+		ParentID:   parentId,
+		Title:      pageProp.Title.Title,
+		Children:   nil,
+		Icon:       page.PageInfo.Icon,
+		Cover:      page.PageInfo.Cover,
+	}
+
+	newPage, err := n.notionClient.CreatePage(context.Background(), newPageParams)
+	if err != nil {
+		return "", err
+	}
+	return newPage.ID, nil
+}
+
+func (n *NotionOperator) AppendBlockChildren(parentId string, block notion.Block) error {
+	blocks := []notion.Block{block}
+	_, err := n.notionClient.AppendBlockChildren(context.Background(), parentId, blocks)
+	return err
+}
+
 // ========================================================================
 // fetchPageInfo
 func (n *NotionOperator) fetchPageInfo(uuid string) (content string, err error) {
