@@ -4,11 +4,30 @@
 	<title>transbot</title>
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script>
+        function extractUuidFromUrl(url) {
+          return url;
+          
+		  var regex = /[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/;
+		  var match = url.match(regex);
+		  if (match) {
+		    return match[0];
+		  } else {
+		    var regen2 = /[0-9a-f]{32}/;
+            match = url.match(regex);
+            if (match){
+                return match[0];
+            }else{
+                return null
+            }
+		  }
+		}
+
 		$(document).ready(function() {
 			$("#send-button").click(function() {
 				var inputVal = $("#input-field").val();
 				var selectVal = $("#select-field").val();
-                u = "http://127.0.0.1:8080/v1/translate/" + inputVal + "/" + selectVal;
+                var uuid = extractUuidFromUrl(inputVal);
+                u = "http://127.0.0.1:8080/v1/translate/" + uuid + "/" + selectVal;
 				console.log(u);
 				$.ajax({
 					url: u,
