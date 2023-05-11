@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>前端页面示例</title>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script>
+		$(document).ready(function() {
+			$("#send-button").click(function() {
+				var inputVal = $("#input-field").val();
+				var selectVal = $("#select-field").val();
+                u = "http://127.0.0.1:8080/v1/translate/" + inputVal + "/" + selectVal;
+				console.log(u);
+				$.ajax({
+					url: u,
+					method: "GET",
+					success: function(response) {
+						alert(response);
+					}
+				});
+			});
+		});
+	</script>
+</head>
+<body>
+	<input type="text" id="input-field" placeholder="输入框"><br>
+	<select id="select-field">
+		<option value="english">english</option>
+		<option value="chinese">chinese</option>
+	</select><br>
+	<button id="send-button">发送</button>
+</body>
+</html>

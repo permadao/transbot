@@ -15,7 +15,7 @@ func TranslatePage(c *gin.Context) {
 	log.Debugf("Get request <translate page> pageuuid: %s , target language: %s", uuid, language)
 
 	// get notion page
-	pageContent, err := transbot.NotionClient.FetchPage("d77601f7a3e649b7967f61a4462fad53")
+	pageContent, err := transbot.NotionClient.FetchPage(uuid)
 	if err != nil {
 		log.WithContext(WithGinContext(c)).Error("fetch page failed: ", err.Error())
 		respondJSONError(c, http.StatusBadRequest, err)
