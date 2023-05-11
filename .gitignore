@@ -22,3 +22,8 @@ go.work
 
 # User config
 config.toml
+
+transbot
+transbot.log
+
+.DS_Store

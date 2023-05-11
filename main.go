@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/permadao/transbot/service"
 	log "github.com/sirupsen/logrus"
@@ -18,9 +19,14 @@ func main() {
 	}
 
 	// Init log
+	logfile, err := os.OpenFile("transbot.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("open log file error: ", err)
+	}
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
+	log.SetOutput(logfile)
 	log.SetLevel(log.DebugLevel)
 
 	// serve
