@@ -14,6 +14,10 @@ var transbot *translator.Translator
 func StartServe() {
 	router := gin.Default()
 	router.Use(gin.Recovery())
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Next()
+	})
 
 	log.Info("Starting server...")
 	openai_key := viper.GetString("openai.api_key")

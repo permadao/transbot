@@ -22,8 +22,10 @@ go.work
 
 # User config
 config.toml
-
+transfrontend
 transbot
 transbot.log
+transbot.tar
+index.html
 
 .DS_Store

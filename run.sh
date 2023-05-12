@@ -1,0 +1,2 @@
+./transfrontend & 
+./transbot

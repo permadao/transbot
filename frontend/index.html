@@ -6,7 +6,7 @@
 	<script>
         function extractUuidFromUrl(url) {
           return url;
-          
+
 		  var regex = /[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/;
 		  var match = url.match(regex);
 		  if (match) {
@@ -34,7 +34,10 @@
 					method: "GET",
 					success: function(response) {
 						alert(response);
-					}
+					},
+                    headers: {
+                        "Access-Control-Allow-Origin": "*"
+                    }
 				});
 			});
 		});
