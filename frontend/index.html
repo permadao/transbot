@@ -27,17 +27,14 @@
 				var inputVal = $("#input-field").val();
 				var selectVal = $("#select-field").val();
                 var uuid = extractUuidFromUrl(inputVal);
-                u = "http://127.0.0.1:8080/v1/translate/" + uuid + "/" + selectVal;
+                u = "http://52.207.251.201:8080/v1/translate/" + uuid + "/" + selectVal;
 				console.log(u);
 				$.ajax({
 					url: u,
 					method: "GET",
 					success: function(response) {
 						alert(response);
-					},
-                    headers: {
-                        "Access-Control-Allow-Origin": "*"
-                    }
+					}
 				});
 			});
 		});
