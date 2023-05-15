@@ -70,14 +70,22 @@ func (n *NotionOperator) FetchPage(uuid string) (content string, err error) {
 func (n *NotionOperator) UploadPage(parentId string, page *NotionPage) (uuid string, err error) {
 	log.WithField("parent", parentId).Info("notion operator: upload page")
 
+	var title []notion.RichText
 	pageProp, ok := page.PageInfo.Properties.(notion.PageProperties)
-	if !ok {
-		return "", fmt.Errorf("convert page preperites error")
+	if ok {
+		title = pageProp.Title.Title
+	} else {
+		// try to covert to (notion.DatabasePageProperty)
+		dbProp, ok := page.PageInfo.Properties.(notion.DatabasePageProperties)
+		if !ok {
+			return "", fmt.Errorf("convert page preperites error")
+		}
+		title = dbProp["Name"].Title
 	}
 	newPageParams := notion.CreatePageParams{
 		ParentType: notion.ParentTypePage,
 		ParentID:   parentId,
-		Title:      pageProp.Title.Title,
+		Title:      title,
 		Children:   nil,
 		Icon:       page.PageInfo.Icon,
 		Cover:      page.PageInfo.Cover,
@@ -113,14 +121,22 @@ func (n *NotionOperator) Content2NotionPage(srcContent string) (*NotionPage, err
 func (n *NotionOperator) CreateNewPage(parentId string, page *NotionPage) (uuid string, err error) {
 	log.WithField("parent", parentId).Info("notion operator: create page")
 
+	var title []notion.RichText
 	pageProp, ok := page.PageInfo.Properties.(notion.PageProperties)
-	if !ok {
-		return "", fmt.Errorf("convert page preperites error")
+	if ok {
+		title = pageProp.Title.Title
+	} else {
+		// try to covert to (notion.DatabasePageProperty)
+		dbProp, ok := page.PageInfo.Properties.(notion.DatabasePageProperties)
+		if !ok {
+			return "", fmt.Errorf("convert page preperites error")
+		}
+		title = dbProp["Name"].Title
 	}
 	newPageParams := notion.CreatePageParams{
 		ParentType: notion.ParentTypePage,
 		ParentID:   parentId,
-		Title:      pageProp.Title.Title,
+		Title:      title,
 		Children:   nil,
 		Icon:       page.PageInfo.Icon,
 		Cover:      page.PageInfo.Cover,

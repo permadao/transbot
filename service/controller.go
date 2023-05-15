@@ -40,19 +40,28 @@ func translate_segmentation(uuid, language string) {
 		log.Error("convert block error: ", err.Error())
 		return
 	}
+	var richTitle *[]notion.RichText
 	// traslate title
 	pageProp, ok := page.PageInfo.Properties.(notion.PageProperties)
 	if !ok {
-		log.Error("get page properties error: ", err.Error())
-		return
+		// try to covert to (notion.DatabasePageProperty)
+		dbProp, ok := page.PageInfo.Properties.(notion.DatabasePageProperties)
+		if !ok {
+			log.Error("get page properties failed!")
+			return
+		}
+		tmpRichTitle := dbProp["Name"].Title
+		richTitle = &tmpRichTitle
+	} else {
+		richTitle = &pageProp.Title.Title
 	}
-	title := notionopt.GetFullRichtext(pageProp.Title.Title)
+	title := notionopt.GetFullRichtext(*richTitle)
 	tranedTitle, err := transbot.Translate(title, language)
 	if err != nil {
 		log.Error("translate title error: ", err.Error())
 		return
 	}
-	notionopt.ReplaceRichtext(&pageProp.Title.Title, tranedTitle)
+	notionopt.ReplaceRichtext(richTitle, tranedTitle)
 
 	// create new page
 	newPageuuid, err := transbot.NotionClient.CreateNewPage(page.PageInfo.ID, page)
