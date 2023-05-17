@@ -1,54 +1,159 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<title>transbot</title>
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script>
-        function extractUuidFromUrl(url) {
-          return url;
+  <head>
+    <title>transbot</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+      function extractUuidFromUrl(url) {
+        return url;
 
-		  var regex = /[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/;
-		  var match = url.match(regex);
-		  if (match) {
-		    return match[0];
-		  } else {
-		    var regen2 = /[0-9a-f]{32}/;
-            match = url.match(regex);
-            if (match){
-                return match[0];
-            }else{
-                return null
-            }
-		  }
-		}
+        var regex = /[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/;
+        var match = url.match(regex);
+        if (match) {
+          return match[0];
+        } else {
+          var regen2 = /[0-9a-f]{32}/;
+          match = url.match(regex);
+          if (match) {
+            return match[0];
+          } else {
+            return null;
+          }
+        }
+      }
 
-		$(document).ready(function() {
-			$("#send-button").click(function() {
-				var inputVal = $("#input-field").val();
-				var selectVal = $("#select-field").val();
-                var uuid = extractUuidFromUrl(inputVal);
-                u = "http://127.0.0.1:8080/v1/translate/" + uuid + "/" + selectVal;
-				console.log(u);
-				$.ajax({
-					url: u,
-					method: "GET",
-					success: function(response) {
-						alert(response);
-					},
-                    headers: {
-                        "Access-Control-Allow-Origin": "*"
-                    }
-				});
-			});
-		});
-	</script>
-</head>
-<body>
-	<input type="text" id="input-field" placeholder="输入框"><br>
-	<select id="select-field">
-		<option value="english">english</option>
-		<option value="chinese">chinese</option>
-	</select><br>
-	<button id="send-button">发送</button>
-</body>
+      $(document).ready(function () {
+        $("#send-button").click(function () {
+          var inputVal = $("#input-field").val();
+          var selectVal = $("#select-field").val();
+          var uuid = extractUuidFromUrl(inputVal);
+          u =
+            "http://52.207.251.201:8080/v1/translate/" + uuid + "/" + selectVal;
+          console.log(u);
+          $.ajax({
+            url: u,
+            method: "GET",
+            success: function () {
+              alert(
+                "Send successful. New page inserted at the bottom of the original page, waiting for translation to complete."
+              );
+            },
+          });
+        });
+      });
+    </script>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        height: 100vh;
+        margin: 0;
+        background-color: #222;
+      }
+
+      .title {
+        color: #fff;
+        font-size: 38px;
+        margin-bottom: 10px;
+        margin-top: 20px;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .input-field {
+        padding: 8px;
+        width: 300px;
+        background-color: #f0f0f0;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        color: #333;
+      }
+
+      .select-field {
+        padding: 8px;
+        width: 200px;
+        background-color: #f0f0f0;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        color: #333;
+        appearance: none;
+        -webkit-appearance: none;
+      }
+      .select-field option {
+        background-color: #fff;
+        color: #333;
+      }
+
+      .button {
+        margin-bottom: 10px;
+        padding: 8px;
+        width: 200px;
+        border-radius: 5px;
+      }
+
+      .description {
+        color: #ababab;
+        margin-bottom: 10px;
+        text-align: left;
+        width: 200px;
+      }
+
+      .button {
+        margin-top: 10px;
+        background-color: #555;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        color: #999;
+        margin-top: 20px;
+        padding: 10px 0;
+        background-color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="title">Transbot</h1>
+      <br />
+      <br />
+      <input
+        type="text"
+        id="input-field"
+        class="input-field"
+        placeholder="输入notion页面uuid"
+      /><br />
+      <p class="description">Translate to:</p>
+      <select id="select-field" class="select-field">
+        <option value="English">English</option>
+        <option value="Chinese">Chinese</option>
+        <option value="Japanese">Japanese</option>
+        <option value="German">German</option>
+        <option value="French">French</option>
+        <option value="Korean">Korean</option>
+        <option value="Russian">Russian</option>
+        <option value="Spanish">Spanish</option></select
+      ><br />
+      <button id="send-button" class="button">开始翻译</button>
+    </div>
+    <footer>Copyright 2023 Permadao All rights Reserved.</footer>
+  </body>
 </html>

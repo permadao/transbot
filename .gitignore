@@ -27,5 +27,7 @@ transbot
 transbot.log
 transbot.tar
 index.html
-
 .DS_Store
+
+# vscode debug
+.vscode
