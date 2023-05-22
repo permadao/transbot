@@ -28,7 +28,7 @@
           var selectVal = $("#select-field").val();
           var uuid = extractUuidFromUrl(inputVal);
           u =
-            "http://52.207.251.201:8080/v1/translate/" + uuid + "/" + selectVal;
+            "https://transbot.info/translate/" + uuid + "/" + selectVal;
           console.log(u);
           $.ajax({
             url: u,
@@ -139,7 +139,7 @@
         type="text"
         id="input-field"
         class="input-field"
-        placeholder="输入notion页面uuid"
+        placeholder="Enter Notion page UUID"
       /><br />
       <p class="description">Translate to:</p>
       <select id="select-field" class="select-field">
@@ -152,7 +152,7 @@
         <option value="Russian">Russian</option>
         <option value="Spanish">Spanish</option></select
       ><br />
-      <button id="send-button" class="button">开始翻译</button>
+      <button id="send-button" class="button">Begin translate</button>
     </div>
     <footer>Copyright 2023 Permadao All rights Reserved.</footer>
   </body>

@@ -14,3 +14,6 @@ version = "0.1.0"
 
 [service]
 	port = 8080
+	tls = false
+	tls_key = "./cert/key.pem"
+	tls_cert = "./cert/cert.pem"
