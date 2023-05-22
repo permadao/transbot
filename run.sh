@@ -1,2 +1,1 @@
-# ./transfrontend & 
 ./transbot
