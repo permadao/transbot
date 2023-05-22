@@ -13,5 +13,5 @@ RUN go build -o transbot main.go
 EXPOSE 8080
 
 # start up frontend
-CMD ["/bin/sh", "-c", "./run.sh"]
+CMD ["./transbot"]
 
