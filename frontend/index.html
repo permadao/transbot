@@ -28,7 +28,7 @@
           var selectVal = $("#select-field").val();
           var uuid = extractUuidFromUrl(inputVal);
           u =
-            "http://52.207.251.201:8080/v1/translate/" + uuid + "/" + selectVal;
+            "https://127.0.0.1:8080/v1/translate/" + uuid + "/" + selectVal;
           console.log(u);
           $.ajax({
             url: u,

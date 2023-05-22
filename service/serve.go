@@ -12,6 +12,12 @@ import (
 var transbot *translator.Translator
 
 func StartServe() {
+	log.Info("Starting server...")
+	openai_key := viper.GetString("openai.api_key")
+	notion_auth := viper.GetString("notion.api_auth")
+	transbot = translator.CreateTranslator(openai_key, notion_auth)
+
+	// ruter
 	router := gin.Default()
 	router.Use(gin.Recovery())
 	router.Use(func(c *gin.Context) {
@@ -25,15 +31,23 @@ func StartServe() {
 		c.Next()
 	})
 
-	log.Info("Starting server...")
-	openai_key := viper.GetString("openai.api_key")
-	notion_auth := viper.GetString("notion.api_auth")
-	transbot = translator.CreateTranslator(openai_key, notion_auth)
-
 	// path
 	group := router.Group("/v1/")
 	group.GET("/translate/:pageuuid/:language", TranslatePage)
 
 	port := fmt.Sprintf(":%s", viper.GetString("service.port"))
-	router.Run(port)
+	if viper.GetBool("service.tls") {
+		key_file := viper.GetString("service.tls_key")
+		cert_file := viper.GetString("service.tls_cert")
+		err := router.RunTLS(port, cert_file, key_file)
+		if err != nil {
+			log.Fatal("run tls service error: ", err.Error())
+		}
+	} else {
+		err := router.Run(port)
+		if err != nil {
+			log.Fatal("run service error: ", err.Error())
+		}
+	}
+
 }
