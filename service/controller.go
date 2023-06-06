@@ -35,7 +35,7 @@ func translate_segmentation(uuid, language string) {
 	}
 
 	// convert string content to struct blocks
-	page, err := notionopt.Content2NotionPage(pageContent)
+	page, err := transbot.NotionClient.Content2NotionPage(pageContent)
 	if err != nil {
 		log.Error("convert block error: ", err.Error())
 		return
@@ -121,7 +121,7 @@ func translate_concurrent(c *gin.Context) {
 	}
 
 	// convert string content to struct blocks
-	page, err := notionopt.Content2NotionPage(pageContent)
+	page, err := transbot.NotionClient.Content2NotionPage(pageContent)
 	if err != nil {
 		log.WithContext(WithGinContext(c)).Error("convert block error:: ", err.Error())
 		respondJSONError(c, http.StatusBadRequest, err)

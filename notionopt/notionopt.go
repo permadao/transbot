@@ -1,11 +1,16 @@
 package notionopt
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/cryptowizard0/go-notion"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -18,22 +23,52 @@ import (
 // Not considering concurrency
 type NotionOperator struct {
 	authToken    string
-	client       *resty.Client
+	httpClient   *resty.Client
 	notionClient *notion.Client
+	s3Client     *s3.Client
+	s3Endpoint   string
+	s3Key        string
+	s3Secret     string
+	s3Bucket     string
 }
 
 // CreateNotionOperator
 func CreateNotionOperator(auth string) *NotionOperator {
+	// http client
 	client := resty.New()
 	client.SetHeader("Accept", "application/json").
 		SetHeader("Notion-Version", viper.GetString("notion.version")).
 		SetAuthToken(auth).
 		SetBaseURL(viper.GetString("notion.base_url"))
 
+	// s3 client
+	key := viper.GetString("4everland.key")
+	secret := viper.GetString("4everland.secret")
+	endpoint := viper.GetString("4everland.endpoint")
+	bucket := viper.GetString("4everland.bucket_name")
+	token := ""
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(key, secret, token)),
+		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				URL: endpoint,
+			}, nil
+		})),
+	)
+	if err != nil {
+		log.Fatalf("unable to load s3 config, %v", err)
+	}
+	s3client := s3.NewFromConfig(cfg)
+
 	return &NotionOperator{
 		authToken:    auth,
-		client:       client,
+		httpClient:   client,
 		notionClient: notion.NewClient(auth),
+		s3Client:     s3client,
+		s3Key:        key,
+		s3Secret:     secret,
+		s3Endpoint:   endpoint,
+		s3Bucket:     bucket,
 	}
 }
 
@@ -115,7 +150,31 @@ func (n *NotionOperator) UploadPage(parentId string, page *NotionPage) (uuid str
 
 // Content2NotionPage converting string content to NotionPage struct
 func (n *NotionOperator) Content2NotionPage(srcContent string) (*NotionPage, error) {
-	return Content2NotionPage(srcContent)
+	var page NotionPage
+	err := json.Unmarshal([]byte(srcContent), &page)
+	if err != nil {
+		return nil, err
+	}
+	log.Info("Blocks count: ", len(page.PageContent.Results))
+	var tmpBlocks []notion.Block
+
+	for _, block := range page.PageContent.Results {
+		dto, ok := block.(notion.BlockDTO)
+		if !ok {
+			return nil, fmt.Errorf("convert to notion.BlockDTO failed1")
+		}
+		if !IsSupported(&dto) {
+			continue
+		}
+		//if dto.Image != nil && dto.Image.Type == notion.FileTypeFile {
+		if dto.Type == notion.BlockTypeImage {
+			block = n.ConvertImageBlock(&dto)
+		}
+		tmpBlocks = append(tmpBlocks, block)
+	}
+	page.PageContent.Results = tmpBlocks
+
+	return &page, nil
 }
 
 func (n *NotionOperator) CreateNewPage(parentId string, page *NotionPage) (uuid string, err error) {
@@ -159,7 +218,7 @@ func (n *NotionOperator) AppendBlockChildren(parentId string, block notion.Block
 // fetchPageInfo
 func (n *NotionOperator) fetchPageInfo(uuid string) (content string, err error) {
 	url := fmt.Sprintf("/v1/pages/%s", uuid)
-	resp, err := n.client.R().Get(url)
+	resp, err := n.httpClient.R().Get(url)
 	if err != nil {
 		log.Error("get request error: ", err.Error())
 		return "", err
@@ -197,7 +256,7 @@ func (n *NotionOperator) fetchPageContent(uuid, startCursor string) (content str
 		url = fmt.Sprintf("/v1/blocks/%s/children?start_cursor=%s", uuid, startCursor)
 	}
 
-	resp, err := n.client.R().Get(url)
+	resp, err := n.httpClient.R().Get(url)
 	if err != nil {
 		log.Error("get request error:", err.Error())
 		return "", err
@@ -231,4 +290,49 @@ func (n *NotionOperator) fetchPageContent(uuid, startCursor string) (content str
 	}
 
 	return fullContent, nil
+}
+
+// ConvertImageBlock
+// 1. Down image
+// 2. Upload image content to 4everland buckets
+// 3. Replace url with the new image path
+func (n *NotionOperator) ConvertImageBlock(blockDTO *notion.BlockDTO) notion.Block {
+	if blockDTO.Image.Type == notion.FileTypeFile {
+		objectKey := blockDTO.ID() + ".jpg"
+		newurl, err := n.uploadImageTo4Everland(blockDTO.Image.File.URL, objectKey)
+		if err != nil {
+			log.Error("upload to 4everland error: ", err) // Just log the error
+		} else {
+			blockDTO.Image.File = nil
+			blockDTO.Image.Type = notion.FileTypeExternal
+			blockDTO.Image.External = &notion.FileExternal{
+				URL: newurl,
+			}
+		}
+	}
+	return *blockDTO
+}
+
+func (n *NotionOperator) uploadImageTo4Everland(imgPath, objectKey string) (url string, err error) {
+	log.Info("Download image: ", imgPath)
+	c := resty.New()
+	resp, err := c.R().Get(imgPath)
+	if err != nil {
+		log.Error("get image error: ", err)
+		return "", err
+	}
+	// upload image to object store
+	input := &s3.PutObjectInput{
+		Bucket: aws.String(n.s3Bucket),
+		Key:    aws.String(objectKey),
+		Body:   bytes.NewReader(resp.Body()),
+	}
+	_, err = n.s3Client.PutObject(context.TODO(), input)
+	if err != nil {
+		log.Error("upload image error: ", err)
+		return "", err
+	}
+
+	url = fmt.Sprintf("https://%s.4everland.store/%s", n.s3Bucket, objectKey)
+	return
 }
