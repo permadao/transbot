@@ -1,11 +1,9 @@
 package notionopt
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/cryptowizard0/go-notion"
-	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -35,67 +33,6 @@ func MergeChildBlocks(content1, content2 string) (merged string, err error) {
 		gjson.Get(content1, "obblockject").String())
 
 	return merged, nil
-}
-
-// ConvertImageBlock convert image block to richtext link.
-func ConvertImageBlock(blockDTO *notion.BlockDTO) notion.Block {
-	if blockDTO.Image.Type == notion.FileTypeFile {
-		url := blockDTO.Image.File.URL
-		textContent := fmt.Sprintf("Image: %s", url)
-		richTextBlock := notion.ParagraphBlock{
-			RichText: []notion.RichText{
-				{
-					Type: notion.RichTextTypeText,
-					Text: &notion.Text{
-						Content: textContent,
-						Link: &notion.Link{
-							URL: url,
-						},
-					},
-					PlainText: textContent,
-					HRef:      &url,
-				},
-			},
-		}
-
-		blockDTO.Type = notion.BlockTypeParagraph
-		blockDTO.Paragraph = &richTextBlock
-		blockDTO.Image = nil
-	}
-	return blockDTO
-	// return notion.BlockDTO{
-	// 	Type:      notion.BlockTypeParagraph,
-	// 	Paragraph: blockDTO.Paragraph,
-	// }
-}
-
-// content2NotionPage converting string content to NotionPage struct
-func Content2NotionPage(srcContent string) (*NotionPage, error) {
-	var page NotionPage
-	err := json.Unmarshal([]byte(srcContent), &page)
-	if err != nil {
-		return nil, err
-	}
-	log.Info("Blocks count: ", len(page.PageContent.Results))
-	var tmpBlocks []notion.Block
-
-	for _, block := range page.PageContent.Results {
-		dto, ok := block.(notion.BlockDTO)
-		if !ok {
-			return nil, fmt.Errorf("convert to notion.BlockDTO failed1")
-		}
-		if !IsSupported(&dto) {
-			continue
-		}
-		if dto.Image != nil && dto.Image.Type == notion.FileTypeFile {
-			block = ConvertImageBlock(&dto)
-			continue
-		}
-		tmpBlocks = append(tmpBlocks, block)
-	}
-	page.PageContent.Results = tmpBlocks
-
-	return &page, nil
 }
 
 // Get string block content

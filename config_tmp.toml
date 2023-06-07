@@ -11,6 +11,11 @@ version = "0.1.0"
 	temperature = 0.7
 	model = "gpt-3.5-turbo"
 	# model = "gpt-4"
+[4everland]
+	key = "<your bucket key from 4everland>"
+	secret = "<your bucket secret from 4everland>"
+	endpoint = "https://endpoint.4everland.co"
+	bucket_name = "<your bucket name>"
 
 [service]
 	port = 8080
